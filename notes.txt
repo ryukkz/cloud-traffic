@@ -1,0 +1,4 @@
+-tcp is lowlevel and we have to worry about individual packets..
+-but http is application level..
+-HTTPX allows Python to send HTTP requests.
+

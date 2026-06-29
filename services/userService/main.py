@@ -27,3 +27,19 @@ def get_users():
         }
     ]
 
+@app.get("/users/{user_id}")
+def get_user(user_id: int):
+    return {
+        "id": user_id,
+        "name": f"User {user_id}"
+    }
+
+
+@app.post("/users/login")
+def login():
+    return {
+        "message": "Login Successful"
+    }
+
+
+

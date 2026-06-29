@@ -2,3 +2,9 @@
 -but http is application level..
 -HTTPX allows Python to send HTTP requests.
 
+-request: Request
+
+-FastAPI gives us the original request:
+It contains:HTTP Method,Headers,Body,Query Parameters,Cookies ,Client IP
+
+-

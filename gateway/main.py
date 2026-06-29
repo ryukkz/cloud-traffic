@@ -60,3 +60,15 @@ def registry1():
     return registry.get_registry()
 
 
+@app.post("/unregister")
+def unregister(service: ServiceRegistration):
+
+    success = registry.unregister(
+        service.service,
+        service.url
+    )
+
+    if success:
+        return {"message": "Service Unregistered"}
+
+    return {"message": "Service Not Found"}

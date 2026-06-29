@@ -25,3 +25,19 @@ class ServiceRegistry:
         return SERVICE_REGISTRY.get(service,[])
     def get_registry(self):
         return SERVICE_REGISTRY
+
+
+    def unregister(self, service: str, url: str):
+        if service not in SERVICE_REGISTRY:
+            return False
+
+        SERVICE_REGISTRY[service] = [
+            instance
+            for instance in SERVICE_REGISTRY[service]
+            if instance.url != url
+        ]
+
+        if len(SERVICE_REGISTRY[service]) == 0:
+            del SERVICE_REGISTRY[service]
+
+        return True

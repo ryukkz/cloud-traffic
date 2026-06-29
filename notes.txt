@@ -7,4 +7,4 @@
 -FastAPI gives us the original request:
 It contains:HTTP Method,Headers,Body,Query Parameters,Cookies ,Client IP
 
--
+-in lifetime function,everything after yield runs when the application/service is shutting down

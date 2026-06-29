@@ -4,6 +4,7 @@ import httpx
 from contextlib import asynccontextmanager
 import os
 from dotenv import load_dotenv
+from routes import router
 
 load_dotenv()
 @asynccontextmanager
@@ -22,7 +23,19 @@ async def lifespan(app):
     print(f"{SERVICE_NAME} registered successfully")
 
     yield
+    async with httpx.AsyncClient() as client:
+
+        await client.post(
+            f"{GATEWAY_URL}/unregister",
+            json={
+                "service": SERVICE_NAME,
+                "url": SERVICE_URL
+            }
+        )
+
+    print("Unregistered")
 app = FastAPI(lifespan=lifespan)
+app.include_router(router)
 SERVICE_NAME = "products"
 HOST = os.getenv("HOST")
 PORT = 8002
@@ -44,17 +57,4 @@ def health():
     return {"status": "healthy"}
 
 
-@app.get("/products")
-def get_products():
-    return [
-        {
-            "id": 1,
-            "name": "Laptop",
-            "price": 75000
-        },
-        {
-            "id": 2,
-            "name": "Phone",
-            "price": 35000
-        }
-    ]
+

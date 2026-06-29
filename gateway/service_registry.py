@@ -1,5 +1,5 @@
 from registry import SERVICE_REGISTRY
-from datetime import datetime
+from datetime import datetime,timedelta
 from models import ServiceInstance
 class ServiceRegistry:
 
@@ -41,3 +41,31 @@ class ServiceRegistry:
             del SERVICE_REGISTRY[service]
 
         return True
+
+    def heartbeat(self,service:str,url:str):
+        print("Updating heartbeat")
+        if service not in SERVICE_REGISTRY:
+            return False
+        for instance in SERVICE_REGISTRY[service]:
+            if instance.url==url:
+                instance.last_heartbeat=datetime.utcnow()
+                return True
+        return False
+
+
+    def cleanup(self):
+        timeout = timedelta(seconds=10)
+        now = datetime.utcnow()
+        services_to_remove = []
+        for service in SERVICE_REGISTRY:
+            SERVICE_REGISTRY[service] = [
+                instance
+                for instance in SERVICE_REGISTRY[service]
+                if now - instance.last_heartbeat <= timeout
+            ]
+
+            if len(SERVICE_REGISTRY[service]) == 0:
+                services_to_remove.append(service)
+                
+        for service in services_to_remove:
+            del SERVICE_REGISTRY[service]

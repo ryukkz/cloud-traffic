@@ -1,43 +1,20 @@
-from fastapi import FastAPI
-import httpx
-from contextlib import asynccontextmanager
-import os
-from dotenv import load_dotenv
-from routes import router
-load_dotenv()
-@asynccontextmanager
-async def lifespan(app):
+from fastapi import FastAPI 
+from common.service_client import create_lifespan
+from .routes import router
 
-    async with httpx.AsyncClient() as client:
 
-        await client.post(
-            f"{GATEWAY_URL}/register",
-            json={
-                "service": SERVICE_NAME,
-                "url": SERVICE_URL
-            }
-        )
 
-    print(f"{SERVICE_NAME} registered successfully")
 
-    yield
-    async with httpx.AsyncClient() as client:
-
-        await client.post(
-            f"{GATEWAY_URL}/unregister",
-            json={
-                "service": SERVICE_NAME,
-                "url": SERVICE_URL
-            }
-        )
-
-    print("Unregistered")
-app = FastAPI(lifespan=lifespan)
 SERVICE_NAME = "orders"
-HOST = os.getenv("HOST")
+HOST = "127.0.0.1"
 PORT = 8003
 SERVICE_URL = f"http://{HOST}:{PORT}"
-GATEWAY_URL = "http://localhost:8000"
+
+app = FastAPI(lifespan=create_lifespan(
+        SERVICE_NAME,
+        SERVICE_URL
+    ))
+
 app.include_router(router)
 @app.get("/")
 def home():

@@ -3,8 +3,19 @@ import httpx
 from fastapi.responses import Response
 from models import ServiceRegistration
 from service_registry import ServiceRegistry
+import asyncio
+from contextlib import asynccontextmanager
 from registry import SERVICE_REGISTRY
-app=FastAPI()
+
+
+@asynccontextmanager
+async def lifespan(app):
+    task = asyncio.create_task(cleanup_task())
+    yield
+    task.cancel()
+
+
+app=FastAPI(lifespan=lifespan)
 registry=ServiceRegistry()
 @app.get("/")
 def home():
@@ -72,3 +83,17 @@ def unregister(service: ServiceRegistration):
         return {"message": "Service Unregistered"}
 
     return {"message": "Service Not Found"}
+
+@app.post("/heartbeat")
+def heartbeat(service:ServiceRegistration):
+    print("Heartbeat received:", service.service, service.url)
+
+    success=registry.heartbeat(service.service,service.url)
+    if success:
+        return {"message":"Heartbeat updated"}
+    return {"message":"Service Not registered"}
+
+async def cleanup_task():
+    while True:
+        registry.cleanup()
+        await asyncio.sleep(5)

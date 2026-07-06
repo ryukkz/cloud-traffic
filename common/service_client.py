@@ -91,9 +91,9 @@ def create_lifespan(
 
         heartbeat_task.cancel()
 
-        await unregister(
-            service_name,
-            service_url
-        )
+        # await unregister(
+        #     service_name,
+        #     service_url
+        # )
 
     return lifespan

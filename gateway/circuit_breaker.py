@@ -1,6 +1,6 @@
 import time
 class CircuitBreaker:
-    def __init__(self,failure_threshold=5,recovery_timeout=30):
+    def __init__(self,failure_threshold=3,recovery_timeout=30):
         self.failure_threshold=failure_threshold
         self.recovery_timeout=recovery_timeout
         self.failure_count=0
@@ -8,6 +8,7 @@ class CircuitBreaker:
         self.last_failure_time=None
 
     def allow_request(self):
+        print("Circuit State:", self.state)
         if self.state=="closed":
             return True
         if self.state=="open":
@@ -25,9 +26,12 @@ class CircuitBreaker:
     def record_success(self): #server recovred
         self.failure_count=0  #reset failures
         self.state="closed"
+        print("Circuit CLOSED")
 
     def record_failure(self):
         self.failure_count+=1
+        print("Failure Count:", self.failure_count)
         self.last_failure_time=time.time()
         if self.failure_count>=self.failure_threshold:
             self.state="open"
+            print("Circuit OPEN")

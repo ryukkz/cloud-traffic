@@ -7,9 +7,10 @@ import asyncio
 from contextlib import asynccontextmanager
 from registry import SERVICE_REGISTRY
 from load_balancer import RoundRobinLoadBalancer,LeastConnectionsLoadBalancer,WeightedRoundRobinLoadBalancer
-
+from circuit_breaker import CircuitBreaker
 
 load_balancer=WeightedRoundRobinLoadBalancer()
+circuit_breakers={}
 @asynccontextmanager
 async def lifespan(app):
     task = asyncio.create_task(cleanup_task())
@@ -28,10 +29,10 @@ def home():
 @app.api_route("/{service}/{path:path}",methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
 async def gateway(service:str,path:str,request:Request):
     instances=registry.get_instances(service)
-    healthy_instances = [instance for instance in instances if instance.healthy]
+    healthy_instances = [instance for instance in instances if instance.healthy and circuit_breakers[instance.url].allow_request()]
     if not healthy_instances:
         raise HTTPException(
-            status_code=404,
+            status_code=503,
             detail="No healthy instances found"
         )
     instance=load_balancer.get_instance(service, healthy_instances)
@@ -53,12 +54,20 @@ async def gateway(service:str,path:str,request:Request):
                 headers=headers,
                 params=params
             )
+        circuit_breakers[instance.url].record_success()
         return Response(
         content=response.content,
         status_code=response.status_code,
         headers=dict(response.headers),
         media_type=response.headers.get("content-type")
     )
+    except Exception:
+        circuit_breakers[instance.url].record_failure()
+
+        raise HTTPException(
+        status_code=503,
+        detail="Backend service unavailable"
+        )
     finally:
         load_balancer.request_finished(instance)
 
@@ -67,6 +76,8 @@ def register(service:ServiceRegistration):
     registry.register(
         service.service,service.url,service.weight
     )
+    if service.url not in circuit_breakers:
+        circuit_breakers[service.url] = CircuitBreaker()
     
     return {
         "message": "Registered Successfully"

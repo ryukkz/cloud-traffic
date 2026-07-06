@@ -57,19 +57,10 @@ class ServiceRegistry:
     def cleanup(self):
         timeout = timedelta(seconds=10)
         now = datetime.utcnow()
-        services_to_remove = []
-        for service in SERVICE_REGISTRY:
-            SERVICE_REGISTRY[service] = [
-                instance
-                for instance in SERVICE_REGISTRY[service]
+
+        for service in SERVICE_REGISTRY.values():
+            for instance in service:
                 if now - instance.last_heartbeat > timeout:
                     instance.healthy = False
                 else:
                     instance.healthy = True
-            ]
-
-            if len(SERVICE_REGISTRY[service]) == 0:
-                services_to_remove.append(service)
-                
-        for service in services_to_remove:
-            del SERVICE_REGISTRY[service]

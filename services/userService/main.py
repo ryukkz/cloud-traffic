@@ -7,7 +7,8 @@ from .routes import router
 
 SERVICE_NAME = "users"
 HOST = "127.0.0.1"
-PORT = 8001
+
+PORT = int(input("enter port for user service 1: "))
 SERVICE_URL = f"http://{HOST}:{PORT}"
 
 app = FastAPI(lifespan=create_lifespan(

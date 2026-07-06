@@ -3,7 +3,7 @@ from datetime import datetime,timedelta
 from models import ServiceInstance
 class ServiceRegistry:
 
-    def register(self,service:str,url:str):
+    def register(self,service:str,url:str, weight: int = 1):
         print("Register called")
         if service not in SERVICE_REGISTRY:
             SERVICE_REGISTRY[service] = []
@@ -13,6 +13,7 @@ class ServiceRegistry:
         
         instance = ServiceInstance(
             url=url,
+            weight=weight,
             last_heartbeat=datetime.utcnow()
 )
         SERVICE_REGISTRY[service].append(instance)
@@ -61,7 +62,10 @@ class ServiceRegistry:
             SERVICE_REGISTRY[service] = [
                 instance
                 for instance in SERVICE_REGISTRY[service]
-                if now - instance.last_heartbeat <= timeout
+                if now - instance.last_heartbeat > timeout:
+                    instance.healthy = False
+                else:
+                    instance.healthy = True
             ]
 
             if len(SERVICE_REGISTRY[service]) == 0:

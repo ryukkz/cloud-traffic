@@ -1,12 +1,22 @@
 from fastapi import APIRouter
-
+import asyncio
 router = APIRouter(
     prefix="/users",
     tags=["Users"]
 )
 
+
+@router.post("/login")
+async def login():
+    await asyncio.sleep(4)
+    return {
+        "message": "Login Successful"
+    }
+
+
 @router.get("/allUsers")
-def get_users():
+async def get_users():
+    await asyncio.sleep(4)
     return [
         {
             "id": 1,
@@ -25,8 +35,4 @@ def get_user(user_id: int):
         "name": f"User {user_id}"
     }
 
-@router.post("/login")
-def login():
-    return {
-        "message": "Login Successful"
-    }
+

@@ -18,7 +18,7 @@ async def send_heartbeat(service_name, service_url):
                     f"{GATEWAY_URL}/heartbeat",
                     json={
                         "service": service_name,
-                        "url": service_url
+                        "url": service_url,"weight": 1
                     }
                 )
             print("Heartbeat Sent")
@@ -31,16 +31,20 @@ async def register(
     service_name,
     service_url
 ):
-
+    wgt=int(input("enter weight: "))
     async with httpx.AsyncClient() as client:
 
-        await client.post(
+        response = await client.post(
             f"{GATEWAY_URL}/register",
             json={
                 "service": service_name,
-                "url": service_url
+                "url": service_url,
+                "weight": wgt
             }
         )
+
+        print(response.status_code)
+        print(response.text)
 
     print(f"{service_name} registered")
 

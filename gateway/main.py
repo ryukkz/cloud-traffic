@@ -6,8 +6,10 @@ from service_registry import ServiceRegistry
 import asyncio
 from contextlib import asynccontextmanager
 from registry import SERVICE_REGISTRY
+from load_balancer import RoundRobinLoadBalancer,LeastConnectionsLoadBalancer,WeightedRoundRobinLoadBalancer
 
 
+load_balancer=WeightedRoundRobinLoadBalancer()
 @asynccontextmanager
 async def lifespan(app):
     task = asyncio.create_task(cleanup_task())
@@ -26,12 +28,14 @@ def home():
 @app.api_route("/{service}/{path:path}",methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
 async def gateway(service:str,path:str,request:Request):
     instances=registry.get_instances(service)
-    if not instances:
+    healthy_instances = [instance for instance in instances if instance.healthy]
+    if not healthy_instances:
         raise HTTPException(
             status_code=404,
-            detail="No instances found"
+            detail="No healthy instances found"
         )
-    instance=instances[0]
+    instance=load_balancer.get_instance(service, healthy_instances)
+    load_balancer.request_started(instance)
     if path:
         url=f"{instance.url}/{service}/{path}"
     else:
@@ -39,26 +43,29 @@ async def gateway(service:str,path:str,request:Request):
     body=await request.body()
     headers=dict(request.headers)
     params=request.query_params
-    
-    async with httpx.AsyncClient() as client:
-        response=await client.request(
-            method=request.method,
-            url=url,
-            content=body,
-            headers=headers,
-            params=params
-        )
+    print(f"[Gateway] Forwarding {service} request to {instance.url}")
+    try:
+        async with httpx.AsyncClient() as client:
+            response=await client.request(
+                method=request.method,
+                url=url,
+                content=body,
+                headers=headers,
+                params=params
+            )
         return Response(
-    content=response.content,
-    status_code=response.status_code,
-    headers=dict(response.headers),
-    media_type=response.headers.get("content-type")
-)
+        content=response.content,
+        status_code=response.status_code,
+        headers=dict(response.headers),
+        media_type=response.headers.get("content-type")
+    )
+    finally:
+        load_balancer.request_finished(instance)
 
 @app.post("/register")
 def register(service:ServiceRegistration):
     registry.register(
-        service.service,service.url
+        service.service,service.url,service.weight
     )
     
     return {

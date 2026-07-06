@@ -4,6 +4,7 @@ from datetime import datetime
 class ServiceRegistration(BaseModel):
     service: str
     url: str 
+    weight: int = 1
 
 class ServiceInstance(BaseModel):
 

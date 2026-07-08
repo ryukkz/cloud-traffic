@@ -8,9 +8,13 @@ from contextlib import asynccontextmanager
 from registry import SERVICE_REGISTRY
 from load_balancer import RoundRobinLoadBalancer,LeastConnectionsLoadBalancer,WeightedRoundRobinLoadBalancer
 from circuit_breaker import CircuitBreaker
+from rate_limiter import RateLimiter
+
 
 load_balancer=WeightedRoundRobinLoadBalancer()
 circuit_breakers={}
+rate_limiter=RateLimiter()
+
 @asynccontextmanager
 async def lifespan(app):
     task = asyncio.create_task(cleanup_task())
@@ -28,6 +32,13 @@ def home():
 
 @app.api_route("/{service}/{path:path}",methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
 async def gateway(service:str,path:str,request:Request):
+    client_ip = request.client.host
+
+    if not rate_limiter.allow_request(client_ip):
+        raise HTTPException(
+            status_code=429,
+            detail="Too Many Requests"
+        )
     instances=registry.get_instances(service)
     healthy_instances = [instance for instance in instances if instance.healthy and circuit_breakers[instance.url].allow_request()]
     if not healthy_instances:

@@ -12,3 +12,7 @@ It contains:HTTP Method,Headers,Body,Query Parameters,Cookies ,Client IP
 -round robin load balancing give tasks for each instance in an order.
 -least connection load balancing track active requests for each instance and assigns task to those instance with less active connections
 -Find all instances with the minimum number of connections(Least connections method).then,If several instances tie, distribute requests among them using Round Robin.
+
+
+-Prometheus is an open-source monitoring and alerting system widely used in cloud-native environments.
+-Prometheus keep track of all the metrics used in cloud traffic monitoring

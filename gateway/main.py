@@ -9,7 +9,14 @@ from registry import SERVICE_REGISTRY
 from load_balancer import RoundRobinLoadBalancer,LeastConnectionsLoadBalancer,WeightedRoundRobinLoadBalancer
 from circuit_breaker import CircuitBreaker
 from rate_limiter import RateLimiter
-
+from prometheus_client import make_asgi_app
+import time 
+from metrics import ( REQUEST_COUNT,
+    REQUEST_LATENCY,
+    ACTIVE_CONNECTIONS,
+    ACTIVE_SERVERS,
+    CIRCUIT_STATE,
+    RATE_LIMITED)
 
 load_balancer=WeightedRoundRobinLoadBalancer()
 circuit_breakers={}
@@ -24,6 +31,8 @@ async def lifespan(app):
 
 app=FastAPI(lifespan=lifespan)
 registry=ServiceRegistry()
+metrics_app = make_asgi_app()
+app.mount("/metrics", metrics_app)
 @app.get("/")
 def home():
     return {
@@ -35,6 +44,8 @@ async def gateway(service:str,path:str,request:Request):
     client_ip = request.client.host
 
     if not rate_limiter.allow_request(client_ip):
+        RATE_LIMITED.inc()
+
         raise HTTPException(
             status_code=429,
             detail="Too Many Requests"
@@ -56,6 +67,9 @@ async def gateway(service:str,path:str,request:Request):
     headers=dict(request.headers)
     params=request.query_params
     print(f"[Gateway] Forwarding {service} request to {instance.url}")
+    start = time.time()
+    status = 500
+    ACTIVE_CONNECTIONS.inc()
     try:
         async with httpx.AsyncClient() as client:
             response=await client.request(
@@ -65,6 +79,7 @@ async def gateway(service:str,path:str,request:Request):
                 headers=headers,
                 params=params
             )
+        status = response.status_code
         circuit_breakers[instance.url].record_success()
         return Response(
         content=response.content,
@@ -73,6 +88,7 @@ async def gateway(service:str,path:str,request:Request):
         media_type=response.headers.get("content-type")
     )
     except Exception:
+        status=503
         circuit_breakers[instance.url].record_failure()
 
         raise HTTPException(
@@ -80,6 +96,20 @@ async def gateway(service:str,path:str,request:Request):
         detail="Backend service unavailable"
         )
     finally:
+        duration = time.time() - start
+
+        REQUEST_COUNT.labels(
+            request.method,
+            request.url.path,
+            str(status)
+        ).inc()
+
+        REQUEST_LATENCY.labels(
+            request.url.path
+        ).observe(duration)
+
+        ACTIVE_CONNECTIONS.dec()
+
         load_balancer.request_finished(instance)
 
 @app.post("/register")
@@ -87,9 +117,12 @@ def register(service:ServiceRegistration):
     registry.register(
         service.service,service.url,service.weight
     )
+    ACTIVE_SERVERS.set(
+        sum(len(v) for v in registry.get_registry().values())
+    )
     if service.url not in circuit_breakers:
         circuit_breakers[service.url] = CircuitBreaker()
-    
+        CIRCUIT_STATE.labels(service.url).set(0)
     return {
         "message": "Registered Successfully"
         
@@ -109,6 +142,9 @@ def unregister(service: ServiceRegistration):
     )
 
     if success:
+        ACTIVE_SERVERS.set(
+            sum(len(v) for v in registry.get_registry().values())
+        )
         return {"message": "Service Unregistered"}
 
     return {"message": "Service Not Found"}

@@ -16,3 +16,7 @@ It contains:HTTP Method,Headers,Body,Query Parameters,Cookies ,Client IP
 
 -Prometheus is an open-source monitoring and alerting system widely used in cloud-native environments.
 -Prometheus keep track of all the metrics used in cloud traffic monitoring
+
+-Grafana for visualizing,displaying ,dashboards,alerts..It simply asks Prometheus
+
+-Latency is simply:How long did it take to process one request?

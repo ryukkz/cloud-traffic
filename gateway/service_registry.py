@@ -1,6 +1,6 @@
-from registry import SERVICE_REGISTRY
+from .registry import SERVICE_REGISTRY
 from datetime import datetime,timedelta
-from models import ServiceInstance
+from .models import ServiceInstance
 class ServiceRegistry:
 
     def register(self,service:str,url:str, weight: int = 1):

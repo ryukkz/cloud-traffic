@@ -1,4 +1,4 @@
-from registry import SERVICE_REGISTRY
+from .registry import SERVICE_REGISTRY
 from collections import defaultdict
 
 class RoundRobinLoadBalancer:

@@ -20,3 +20,8 @@ It contains:HTTP Method,Headers,Body,Query Parameters,Cookies ,Client IP
 -Grafana for visualizing,displaying ,dashboards,alerts..It simply asks Prometheus
 
 -Latency is simply:How long did it take to process one request?
+
+-"Why is this called a Cloud Traffic Manager instead of an API Gateway?"
+    You can answer:"Besides routing traffic, it continuously monitors load using Prometheus metrics, makes scaling decisions based on configurable thresholds, and dynamically updates the service registry. This simulates cloud-native autoscaling while integrating with health monitoring, rate limiting, and circuit breaking."
+
+-each server gets its own docker file

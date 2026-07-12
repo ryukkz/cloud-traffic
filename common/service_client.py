@@ -7,7 +7,8 @@ import asyncio
 load_dotenv()
 from common.config import (
     GATEWAY_URL,
-    HEARTBEAT_INTERVAL
+    HEARTBEAT_INTERVAL,
+    SERVICE_WEIGHT
 )
 
 async def send_heartbeat(service_name, service_url):
@@ -18,7 +19,7 @@ async def send_heartbeat(service_name, service_url):
                     f"{GATEWAY_URL}/heartbeat",
                     json={
                         "service": service_name,
-                        "url": service_url,"weight": 1
+                        "url": service_url
                     }
                 )
             print("Heartbeat Sent")
@@ -31,7 +32,7 @@ async def register(
     service_name,
     service_url
 ):
-    wgt=int(input("enter weight: "))
+   
     async with httpx.AsyncClient() as client:
 
         response = await client.post(
@@ -39,7 +40,7 @@ async def register(
             json={
                 "service": service_name,
                 "url": service_url,
-                "weight": wgt
+                "weight": SERVICE_WEIGHT
             }
         )
 
@@ -73,23 +74,29 @@ def create_lifespan(
     @asynccontextmanager
     async def lifespan(app):
 
-        await register(
-            service_name,
-            service_url
-        )
+        try:
+            await register(service_name, service_url)
+            heartbeat_task = asyncio.create_task(
 
-        heartbeat_task = asyncio.create_task(
-
-        send_heartbeat(
-                service_name,
-                service_url
-            )
+                send_heartbeat(
+                         service_name,
+                         service_url
+                )
 
         )
+        except Exception as e:
+            print(f"Registration failed: {e}")
+
+        
 
         yield
 
-        heartbeat_task.cancel()
+        if heartbeat_task:
+            heartbeat_task.cancel()
+            try:
+                await heartbeat_task
+            except asyncio.CancelledError:
+                pass
 
         # await unregister(
         #     service_name,

@@ -1,0 +1,96 @@
+version: "3.9"
+
+services:
+
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    container_name: gateway
+    ports:
+      - "8000:8000"
+    environment:
+      GATEWAY_URL: http://gateway:8000
+    depends_on:
+      - redis
+    networks:
+      - traffic-network
+
+  user-service:
+    build:
+      context: .
+      dockerfile: services/userService/Dockerfile
+    container_name: user-service
+    ports:
+      - "8002:8002"
+    environment:
+      GATEWAY_URL: http://gateway:8000
+      SERVICE_WEIGHT: 1
+    depends_on:
+      - gateway
+    networks:
+      - traffic-network
+
+  product-service:
+    build:
+      context: .
+      dockerfile: services/productService/Dockerfile
+    container_name: product-service
+    ports:
+      - "8003:8003"
+    environment:
+      GATEWAY_URL: http://gateway:8000
+      SERVICE_WEIGHT: 1
+    depends_on:
+      - gateway
+    networks:
+      - traffic-network
+
+  order-service:
+    build:
+      context: .
+      dockerfile: services/orderService/Dockerfile
+    container_name: order-service
+    ports:
+      - "8004:8004"
+    environment:
+      GATEWAY_URL: http://gateway:8000
+      SERVICE_WEIGHT: 1
+    depends_on:
+      - gateway
+    networks:
+      - traffic-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - traffic-network
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    depends_on:
+      - gateway
+    networks:
+      - traffic-network
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - traffic-network
+
+networks:
+  traffic-network:
+    driver: bridge

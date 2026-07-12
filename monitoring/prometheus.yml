@@ -6,13 +6,5 @@ scrape_configs:
 
     static_configs:
       - targets:
-          - host.docker.internal:8000  #Which application should I monitor?
-  - job_name: user-service-1
-    static_configs:
-      - targets:
-          - host.docker.internal:8002
-
-  - job_name: user-service-2
-    static_configs:
-      - targets:
-          - host.docker.internal:8003        
+          - gateway:8000  #Which application should I monitor?
+ 

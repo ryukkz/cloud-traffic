@@ -1,14 +1,12 @@
 from fastapi import FastAPI 
 from common.service_client import create_lifespan
 from .routes import router
-
+from common.config import SERVICE_URL
 
 
 
 SERVICE_NAME = "products"
-HOST = "127.0.0.1"
-PORT = 8002
-SERVICE_URL = f"http://{HOST}:{PORT}"
+
 
 app = FastAPI(lifespan=create_lifespan(
         SERVICE_NAME,

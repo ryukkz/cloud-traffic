@@ -1,5 +1,6 @@
 FROM python:3.12-slim
-
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
 COPY requirements.txt .
@@ -10,11 +11,4 @@ COPY . .
 
 EXPOSE 8004
 
-CMD [
-    "uvicorn",
-    "services.orderService.main:app",
-    "--host",
-    "0.0.0.0",
-    "--port",
-    "8004"
-]
+CMD ["uvicorn", "services.userService.main:app", "--host", "0.0.0.0", "--port", "8002"]

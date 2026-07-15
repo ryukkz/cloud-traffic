@@ -73,6 +73,7 @@ def create_lifespan(
 
     @asynccontextmanager
     async def lifespan(app):
+        heartbeat_task = None
 
         try:
             await register(service_name, service_url)

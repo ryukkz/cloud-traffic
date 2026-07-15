@@ -1,4 +1,4 @@
-version: "3.9"
+
 
 services:
 
@@ -25,6 +25,7 @@ services:
       - "8002:8002"
     environment:
       GATEWAY_URL: http://gateway:8000
+      SERVICE_URL: http://user-service:8002
       SERVICE_WEIGHT: 1
     depends_on:
       - gateway
@@ -40,6 +41,7 @@ services:
       - "8003:8003"
     environment:
       GATEWAY_URL: http://gateway:8000
+      SERVICE_URL: http://product-service:8003
       SERVICE_WEIGHT: 1
     depends_on:
       - gateway
@@ -55,6 +57,7 @@ services:
       - "8004:8004"
     environment:
       GATEWAY_URL: http://gateway:8000
+      SERVICE_URL: http://order-service:8004
       SERVICE_WEIGHT: 1
     depends_on:
       - gateway
@@ -86,6 +89,8 @@ services:
     container_name: grafana
     ports:
       - "3000:3000"
+    volumes:
+      - grafana-storage:/var/lib/grafana
     depends_on:
       - prometheus
     networks:
@@ -94,3 +99,6 @@ services:
 networks:
   traffic-network:
     driver: bridge
+
+volumes:
+  grafana-storage:

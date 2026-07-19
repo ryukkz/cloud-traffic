@@ -25,3 +25,7 @@ It contains:HTTP Method,Headers,Body,Query Parameters,Cookies ,Client IP
     You can answer:"Besides routing traffic, it continuously monitors load using Prometheus metrics, makes scaling decisions based on configurable thresholds, and dynamically updates the service registry. This simulates cloud-native autoscaling while integrating with health monitoring, rate limiting, and circuit breaking."
 
 -each server gets its own docker file
+
+
+
+https://chatgpt.com/s/t_6a5d05c814648191a8cdf4fa3bb2d52f

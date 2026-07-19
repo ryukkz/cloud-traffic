@@ -11,4 +11,4 @@ COPY . .
 
 EXPOSE 8003
 
-CMD ["uvicorn", "services.userService.main:app", "--host", "0.0.0.0", "--port", "8002"]
+CMD ["uvicorn", "services.productService.main:app", "--host", "0.0.0.0", "--port", "8003"]

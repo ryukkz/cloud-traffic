@@ -1,5 +1,5 @@
 from .redis_client import redis_client
-LIMIT = 10
+LIMIT = 100000
 WINDOW = 60
 class RateLimiter:
     def allow_request(self,client_id):

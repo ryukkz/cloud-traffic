@@ -196,8 +196,9 @@ async def gateway(service: str, path: str, request: Request):
                 await asyncio.sleep(RETRY_DELAY)
             finally:
                 load_balancer.request_finished(instance)
-        print("[Gateway] All retry attempts failed.")
+        
         if response is None:
+            print("[Gateway] All retry attempts failed.")
             raise HTTPException(
                 status_code=503,
                 detail="All backend instances failed"
@@ -235,3 +236,4 @@ async def gateway(service: str, path: str, request: Request):
         ACTIVE_CONNECTIONS.dec()
 
         
+

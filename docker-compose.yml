@@ -11,6 +11,8 @@ services:
       - "8000:8000"
     environment:
       GATEWAY_URL: http://gateway:8000
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     depends_on:
       - redis
     networks:
